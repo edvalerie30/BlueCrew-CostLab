@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import type { TradeCategory } from '../types/estimate';
 import { useEstimateStore } from '../store/estimateStore';
-import { getPricingByTrade, getCategoriesByTrade } from '../data/pricing';
+import { getPricingByTrade, getCategoriesByTrade } from '../data/pricingDatabase';
 import { getTradeDefaultMargin } from '../data/trades';
 
 interface AddLineItemFormProps {
@@ -46,6 +46,7 @@ export function AddLineItemForm({ tradeId, onClose }: AddLineItemFormProps) {
         quantity: 1,
         unit: pricing.unit,
         unitCost: pricing.baseCost,
+        // defaultMarkup is stored as decimal (0.25 = 25%), convert to percentage for display
         markup: pricing.defaultMarkup * 100,
       });
     }
@@ -121,8 +122,8 @@ export function AddLineItemForm({ tradeId, onClose }: AddLineItemFormProps) {
               <option value="">Choose from pricing table...</option>
               {filteredPricing.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.item} - ${p.baseCost}/{p.unit}
-                  {p.tier && ` (${p.tier})`}
+                  {p.item} - ${p.baseCost.toLocaleString()}/{p.unit}
+                  {p.brand && ` [${p.brand}]`}
                 </option>
               ))}
             </select>
@@ -166,6 +167,7 @@ export function AddLineItemForm({ tradeId, onClose }: AddLineItemFormProps) {
             <option value="sqft">Sq Ft</option>
             <option value="lf">Lin Ft</option>
             <option value="cuyd">Cu Yd</option>
+            <option value="ton">Ton</option>
             <option value="lb">Pounds</option>
             <option value="hr">Hours</option>
             <option value="ls">Lump Sum</option>
