@@ -1360,3 +1360,314 @@ body {
 .main-content.tabbed .center-panel {
   overflow-y: auto;
 }
+
+/* ============================================
+   SUB-TABS (Estimate / Proposal Content)
+   ============================================ */
+
+.sub-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sub-tab {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 0.813rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sub-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sub-tab.active {
+  background: var(--accent-blue);
+  color: white;
+}
+
+/* ============================================
+   PROPOSAL EDITOR
+   ============================================ */
+
+.proposal-editor {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.proposal-section {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+}
+
+.proposal-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Image Upload Area */
+.image-upload-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-upload-area:hover {
+  border-color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.upload-placeholder span {
+  font-size: 2rem;
+}
+
+.upload-placeholder p {
+  font-size: 0.813rem;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+/* Design Fee Input */
+.design-fee-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.design-fee-input label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.design-fee-input input {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  width: 150px;
+}
+
+.design-fee-input input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+/* Bullets List */
+.bullets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bullet-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bullet-item input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.813rem;
+}
+
+.bullet-item input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.bullet-item button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.bullet-item button:hover {
+  color: var(--accent-red);
+}
+
+.add-bullet-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.813rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.add-bullet-btn:hover {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Upgrades List */
+.upgrades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.upgrade-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upgrade-item .upgrade-desc {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.813rem;
+}
+
+.upgrade-item .upgrade-amount {
+  width: 100px;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 0.813rem;
+  text-align: right;
+}
+
+.upgrade-item input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.upgrade-item button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.upgrade-item button:hover {
+  color: var(--accent-red);
+}
+
+/* Not Included Editor */
+.not-included-editor {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.not-included-editor h4 {
+  color: var(--accent-red);
+  border-bottom-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Upgrades Section Editor */
+.upgrades-section-editor {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.upgrades-section-editor h4 {
+  color: var(--accent-orange);
+  border-bottom-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Generate Proposal Button */
+.btn-generate-proposal {
+  background: var(--accent-purple);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.btn-generate-proposal:hover {
+  background: #9f75f7;
+  transform: translateY(-1px);
+}
+
+/* Section Title Input */
+.section-title-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.section-title-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
