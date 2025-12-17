@@ -173,33 +173,113 @@ function App() {
 
     // Simulate analysis delay
     setTimeout(() => {
-      // For demo: auto-populate some pool geometry based on "detected" values
+      // Detected pool dimensions (simulated AI extraction)
+      const detectedLength = 32;
+      const detectedWidth = 16;
+      const detectedShallowDepth = 3.5;
+      const detectedDeepEnd = 6;
+      const poolArea = detectedLength * detectedWidth; // 512 sqft
+      const poolPerimeter = 2 * (detectedLength + detectedWidth); // 96 LF
+      const avgDepth = (detectedShallowDepth + detectedDeepEnd) / 2; // 4.75 ft
+      const deckArea = poolPerimeter * 6; // 6ft deck width
+
+      // Update pool geometry
       setPoolGeometry({
         poolShape: 'Rectangular',
-        length: 32,
-        width: 16,
-        shallowDepth: 3.5,
-        deepEnd: 6,
-        deckArea: 512,
+        length: detectedLength,
+        width: detectedWidth,
+        shallowDepth: detectedShallowDepth,
+        deepEnd: detectedDeepEnd,
+        deckArea: deckArea,
       });
 
-      // Enable and expand the inground pool trade
-      setTradeData(prev => ({
-        ...prev,
-        inground_pool: {
-          ...prev.inground_pool,
-          enabled: true,
-          expanded: true,
-        },
-        plumbing: {
-          ...prev.plumbing,
-          enabled: true,
-        },
-        electrical: {
-          ...prev.electrical,
-          enabled: true,
-        },
-      }));
+      // Auto-populate line items with calculated quantities
+      setTradeData(prev => {
+        const updated = { ...prev };
+
+        // Inground Pool trade - update quantities based on pool size
+        if (updated.inground_pool) {
+          updated.inground_pool = {
+            ...updated.inground_pool,
+            enabled: true,
+            expanded: true,
+            lineItems: updated.inground_pool.lineItems.map(item => {
+              let qty = item.qty;
+              // Auto-calculate quantities based on description
+              if (item.description.toLowerCase().includes('shotcrete') || item.description.toLowerCase().includes('gunite')) {
+                qty = Math.ceil((poolArea * avgDepth * 0.08) / 27); // cubic yards
+              } else if (item.description.toLowerCase().includes('rebar')) {
+                qty = Math.ceil(poolArea / 50); // sections
+              } else if (item.description.toLowerCase().includes('concrete pump')) {
+                qty = 1;
+              } else if (item.description.toLowerCase().includes('fuel charge')) {
+                qty = Math.ceil((poolArea * avgDepth * 0.08) / 27 / 9); // per 9 CYD
+              } else if (item.description.toLowerCase().includes('admixture')) {
+                qty = Math.ceil((poolArea * avgDepth * 0.08) / 27); // per cubic yard
+              }
+              return { ...item, qty };
+            }),
+          };
+        }
+
+        // Access trade - excavation, deck work
+        if (updated.access) {
+          updated.access = {
+            ...updated.access,
+            enabled: true,
+            expanded: true,
+            lineItems: updated.access.lineItems.map(item => {
+              let qty = item.qty;
+              if (item.description.toLowerCase().includes('deck')) {
+                qty = deckArea;
+              } else if (item.description.toLowerCase().includes('fence')) {
+                qty = Math.ceil(poolPerimeter * 1.5); // fence around pool area
+              } else if (item.description.toLowerCase().includes('gate')) {
+                qty = 1;
+              }
+              return { ...item, qty };
+            }),
+          };
+        }
+
+        // Plumbing
+        if (updated.plumbing) {
+          updated.plumbing = {
+            ...updated.plumbing,
+            enabled: true,
+            lineItems: updated.plumbing.lineItems.map(item => {
+              let qty = item.qty;
+              if (item.description.toLowerCase().includes('main drain')) {
+                qty = 2;
+              } else if (item.description.toLowerCase().includes('skimmer')) {
+                qty = Math.ceil(poolPerimeter / 40); // 1 per 40 LF
+              } else if (item.description.toLowerCase().includes('return')) {
+                qty = Math.ceil(poolPerimeter / 25); // 1 per 25 LF
+              }
+              return { ...item, qty };
+            }),
+          };
+        }
+
+        // Electrical
+        if (updated.electrical) {
+          updated.electrical = {
+            ...updated.electrical,
+            enabled: true,
+            lineItems: updated.electrical.lineItems.map(item => {
+              let qty = item.qty;
+              if (item.description.toLowerCase().includes('light')) {
+                qty = Math.ceil(poolPerimeter / 30); // 1 per 30 LF
+              } else if (item.description.toLowerCase().includes('bonding')) {
+                qty = 1;
+              }
+              return { ...item, qty };
+            }),
+          };
+        }
+
+        return updated;
+      });
 
       setAnalysisStatus('complete');
     }, 1500);
