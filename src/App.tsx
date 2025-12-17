@@ -39,6 +39,8 @@ interface PoolGeometry {
   shallowDepth: number;
   deepEnd: number;
   deckArea: number;
+  poolGallons: number;
+  spaGallons: number;
 }
 
 interface TradeData {
@@ -68,6 +70,8 @@ function App() {
     shallowDepth: 3.5,
     deepEnd: 7,
     deckArea: 740,
+    poolGallons: 0,
+    spaGallons: 0,
   });
 
   // Uploaded Files State
@@ -185,6 +189,8 @@ function App() {
       const poolPerimeter = 2 * (detectedLength + detectedWidth); // 96 LF
       const avgDepth = (detectedShallowDepth + detectedDeepEnd) / 2; // 4.75 ft
       const deckArea = poolPerimeter * 6; // 6ft deck width
+      // Calculate gallons: Area x Avg Depth x 7.48 gallons per cubic foot
+      const poolGallons = Math.round(poolArea * avgDepth * 7.48);
 
       // Update pool geometry
       setPoolGeometry({
@@ -194,6 +200,8 @@ function App() {
         shallowDepth: detectedShallowDepth,
         deepEnd: detectedDeepEnd,
         deckArea: deckArea,
+        poolGallons: poolGallons,
+        spaGallons: 450, // Default spa size estimate
       });
 
       // Auto-populate line items with calculated quantities
@@ -701,6 +709,30 @@ function App() {
                     setPoolGeometry({ ...poolGeometry, deckArea: parseFloat(e.target.value) || 0 })
                   }
                 />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pool Gallons</label>
+                  <input
+                    type="number"
+                    value={poolGeometry.poolGallons || ''}
+                    placeholder="0"
+                    onChange={(e) =>
+                      setPoolGeometry({ ...poolGeometry, poolGallons: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Spa Gallons</label>
+                  <input
+                    type="number"
+                    value={poolGeometry.spaGallons || ''}
+                    placeholder="0"
+                    onChange={(e) =>
+                      setPoolGeometry({ ...poolGeometry, spaGallons: parseFloat(e.target.value) || 0 })
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
