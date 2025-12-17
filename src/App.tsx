@@ -15,7 +15,8 @@ interface LineItem {
   description: string;
   qty: number;
   unit: string;
-  unitCost: number;
+  materials: number;
+  equipment: number;
   labor: number;
   notes: string;
 }
@@ -88,7 +89,8 @@ function App() {
           description: p.item,
           qty: 0,
           unit: p.unit.toUpperCase(),
-          unitCost: p.baseCost,
+          materials: p.baseCost,
+          equipment: 0,
           labor: 0,
           notes: p.notes || '',
         })),
@@ -106,7 +108,8 @@ function App() {
     selectedPricingId: '',
     customDescription: '',
     quantity: 1,
-    unitCost: 0,
+    materials: 0,
+    equipment: 0,
     labor: 0,
     unit: 'EA',
   });
@@ -318,7 +321,7 @@ function App() {
   // Handle selecting a pricing item from the database
   const handlePricingSelect = useCallback((pricingId: string) => {
     if (!pricingId) {
-      setNewItemForm(prev => ({ ...prev, selectedPricingId: '', unitCost: 0, unit: 'EA' }));
+      setNewItemForm(prev => ({ ...prev, selectedPricingId: '', materials: 0, unit: 'EA' }));
       return;
     }
     const pricing = getPricingById(pricingId);
@@ -326,7 +329,7 @@ function App() {
       setNewItemForm(prev => ({
         ...prev,
         selectedPricingId: pricingId,
-        unitCost: pricing.baseCost,
+        materials: pricing.baseCost,
         unit: pricing.unit.toUpperCase(),
         customDescription: '',
       }));
@@ -345,7 +348,8 @@ function App() {
       description,
       qty: newItemForm.quantity,
       unit: newItemForm.unit,
-      unitCost: newItemForm.unitCost,
+      materials: newItemForm.materials,
+      equipment: newItemForm.equipment,
       labor: newItemForm.labor,
       notes: pricing?.notes || '',
     };
@@ -363,7 +367,8 @@ function App() {
       selectedPricingId: '',
       customDescription: '',
       quantity: 1,
-      unitCost: 0,
+      materials: 0,
+      equipment: 0,
       labor: 0,
       unit: 'EA',
     });
@@ -375,10 +380,11 @@ function App() {
     let costTotal = 0;
     let sellTotal = 0;
     trade.lineItems.forEach((item) => {
-      const itemCost = item.qty * item.unitCost;
+      const itemMaterials = item.qty * item.materials;
+      const itemEquipment = item.qty * item.equipment;
       const itemLabor = item.qty * item.labor;
-      costTotal += itemCost + itemLabor;
-      sellTotal += (itemCost + itemLabor) * 1.25; // 25% markup
+      costTotal += itemMaterials + itemEquipment + itemLabor;
+      sellTotal += (itemMaterials + itemEquipment + itemLabor) * 1.25; // 25% markup
     });
     return { costTotal, sellTotal };
   }, []);
@@ -386,6 +392,7 @@ function App() {
   // Project Totals
   const projectTotals = React.useMemo(() => {
     let materialsCost = 0;
+    let equipmentCost = 0;
     let laborCost = 0;
     let activeTradesCount = 0;
     let totalLineItems = 0;
@@ -396,22 +403,26 @@ function App() {
         trade.lineItems.forEach((item) => {
           if (item.qty > 0) {
             totalLineItems++;
-            materialsCost += item.qty * item.unitCost;
+            materialsCost += item.qty * item.materials;
+            equipmentCost += item.qty * item.equipment;
             laborCost += item.qty * item.labor;
           }
         });
       }
     });
 
-    const totalCost = materialsCost + laborCost;
+    const totalCost = materialsCost + equipmentCost + laborCost;
     const subtotal = totalCost * 1.25; // 25% markup
-    const salesTax = subtotal * 0.08;
+    // Sales tax only applies to materials and equipment, not labor
+    const taxableAmount = (materialsCost + equipmentCost) * 1.25;
+    const salesTax = taxableAmount * 0.08;
     const contractPrice = subtotal + salesTax;
     const grossProfit = contractPrice - totalCost;
     const marginPercent = totalCost > 0 ? (grossProfit / contractPrice) * 100 : 0;
 
     return {
       materialsCost,
+      equipmentCost,
       laborCost,
       totalCost,
       subtotal,
@@ -748,20 +759,29 @@ function App() {
                             <th>Description</th>
                             <th>QTY</th>
                             <th>Unit</th>
-                            <th>Unit Cost</th>
+                            <th>Materials</th>
+                            <th>Equipment</th>
                             <th>Labor</th>
                             <th>Cost Total</th>
                             <th>Sell Total</th>
-                            <th>Notes</th>
                           </tr>
                         </thead>
                         <tbody>
                           {data.lineItems.map((item) => {
-                            const costTotal = item.qty * item.unitCost + item.qty * item.labor;
+                            const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
                             const sellTotal = costTotal * 1.25;
                             return (
                               <tr key={item.id}>
-                                <td className="description">{item.description}</td>
+                                <td className="description">
+                                  <input
+                                    type="text"
+                                    className="desc-input"
+                                    value={item.description}
+                                    onChange={(e) =>
+                                      updateLineItem(trade.id, item.id, 'description', e.target.value)
+                                    }
+                                  />
+                                </td>
                                 <td>
                                   <input
                                     type="number"
@@ -777,8 +797,48 @@ function App() {
                                     }
                                   />
                                 </td>
-                                <td>{item.unit}</td>
-                                <td>${item.unitCost.toLocaleString()}</td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    className="unit-input"
+                                    value={item.unit}
+                                    onChange={(e) =>
+                                      updateLineItem(trade.id, item.id, 'unit', e.target.value)
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    className="cost-input"
+                                    value={item.materials || ''}
+                                    placeholder="$0.00"
+                                    onChange={(e) =>
+                                      updateLineItem(
+                                        trade.id,
+                                        item.id,
+                                        'materials',
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    className="cost-input"
+                                    value={item.equipment || ''}
+                                    placeholder="$0.00"
+                                    onChange={(e) =>
+                                      updateLineItem(
+                                        trade.id,
+                                        item.id,
+                                        'equipment',
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </td>
                                 <td>
                                   <input
                                     type="number"
@@ -801,7 +861,6 @@ function App() {
                                 <td className="sell-total">
                                   {sellTotal > 0 ? `$${sellTotal.toLocaleString()}` : '-'}
                                 </td>
-                                <td className="notes-cell">{item.notes || '-'}</td>
                               </tr>
                             );
                           })}
@@ -833,6 +892,10 @@ function App() {
               <div className="totals-row">
                 <span className="label">Materials Cost:</span>
                 <span className="value">${projectTotals.materialsCost.toLocaleString()}</span>
+              </div>
+              <div className="totals-row">
+                <span className="label">Equipment Cost:</span>
+                <span className="value">${projectTotals.equipmentCost.toLocaleString()}</span>
               </div>
               <div className="totals-row">
                 <span className="label">Labor Cost:</span>
@@ -962,17 +1025,6 @@ function App() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Unit Cost ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newItemForm.unitCost}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, unitCost: parseFloat(e.target.value) || 0 }))}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
                   <label>Unit</label>
                   <input
                     type="text"
@@ -980,15 +1032,35 @@ function App() {
                     onChange={(e) => setNewItemForm(prev => ({ ...prev, unit: e.target.value }))}
                   />
                 </div>
+              </div>
+              <div className="form-row">
                 <div className="form-group">
-                  <label>Labor ($)</label>
+                  <label>Materials ($)</label>
                   <input
                     type="number"
                     step="0.01"
-                    value={newItemForm.labor}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, labor: parseFloat(e.target.value) || 0 }))}
+                    value={newItemForm.materials}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, materials: parseFloat(e.target.value) || 0 }))}
                   />
                 </div>
+                <div className="form-group">
+                  <label>Equipment ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newItemForm.equipment}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, equipment: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Labor ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newItemForm.labor}
+                  onChange={(e) => setNewItemForm(prev => ({ ...prev, labor: parseFloat(e.target.value) || 0 }))}
+                />
               </div>
             </div>
             <div className="modal-footer">
