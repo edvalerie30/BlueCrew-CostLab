@@ -108,6 +108,7 @@ function App() {
 
   // Modal State
   const [showAddItemModal, setShowAddItemModal] = useState<TradeCategory | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [newItemForm, setNewItemForm] = useState({
     selectedPricingId: '',
     customDescription: '',
@@ -443,6 +444,229 @@ function App() {
     };
   }, [tradeData]);
 
+  // Export to CSV
+  const exportToCSV = useCallback((isClientView: boolean) => {
+    const lines: string[] = [];
+    const date = new Date().toLocaleDateString();
+
+    // Header info
+    lines.push(`BlueCrew CostLab - ${isClientView ? 'Client Proposal' : 'Internal Estimate'}`);
+    lines.push(`Generated: ${date}`);
+    lines.push(`Job Number: ${projectInfo.jobNumber}`);
+    lines.push(`Job Name: ${projectInfo.jobName}`);
+    lines.push(`Owner: ${projectInfo.ownerName}`);
+    lines.push(`Address: ${projectInfo.streetAddress}, ${projectInfo.city}, ${projectInfo.state}`);
+    lines.push('');
+
+    // Pool info
+    lines.push('Pool Geometry');
+    lines.push(`Shape: ${poolGeometry.poolShape}`);
+    lines.push(`Dimensions: ${poolGeometry.length}' x ${poolGeometry.width}'`);
+    lines.push(`Depth: ${poolGeometry.shallowDepth}' - ${poolGeometry.deepEnd}'`);
+    lines.push(`Pool Gallons: ${poolGeometry.poolGallons.toLocaleString()}`);
+    lines.push(`Spa Gallons: ${poolGeometry.spaGallons.toLocaleString()}`);
+    lines.push('');
+
+    // Line items header
+    if (isClientView) {
+      lines.push('Trade,Description,QTY,Unit,Sell Total');
+    } else {
+      lines.push('Trade,Description,QTY,Unit,Materials,Equipment,Labor,Cost Total,Sell Total');
+    }
+
+    // Line items
+    TRADE_LIST.forEach(trade => {
+      const data = tradeData[trade.id];
+      if (data.enabled) {
+        data.lineItems.forEach(item => {
+          if (item.qty > 0) {
+            const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
+            const sellTotal = costTotal * 1.25;
+            if (isClientView) {
+              lines.push(`"${trade.name}","${item.description}",${item.qty},${item.unit},$${sellTotal.toFixed(2)}`);
+            } else {
+              lines.push(`"${trade.name}","${item.description}",${item.qty},${item.unit},$${item.materials.toFixed(2)},$${item.equipment.toFixed(2)},$${item.labor.toFixed(2)},$${costTotal.toFixed(2)},$${sellTotal.toFixed(2)}`);
+            }
+          }
+        });
+      }
+    });
+
+    lines.push('');
+
+    // Totals
+    if (isClientView) {
+      lines.push('Summary');
+      lines.push(`Subtotal,$${projectTotals.subtotal.toLocaleString()}`);
+      lines.push(`Sales Tax (8%),$${projectTotals.salesTax.toLocaleString()}`);
+      lines.push(`Contract Price,$${projectTotals.contractPrice.toLocaleString()}`);
+    } else {
+      lines.push('Cost Summary');
+      lines.push(`Materials Cost,$${projectTotals.materialsCost.toLocaleString()}`);
+      lines.push(`Equipment Cost,$${projectTotals.equipmentCost.toLocaleString()}`);
+      lines.push(`Labor Cost,$${projectTotals.laborCost.toLocaleString()}`);
+      lines.push(`Total Cost,$${projectTotals.totalCost.toLocaleString()}`);
+      lines.push('');
+      lines.push('Pricing');
+      lines.push(`Subtotal,$${projectTotals.subtotal.toLocaleString()}`);
+      lines.push(`Sales Tax (8%),$${projectTotals.salesTax.toLocaleString()}`);
+      lines.push(`Contract Price,$${projectTotals.contractPrice.toLocaleString()}`);
+      lines.push(`Gross Profit,$${projectTotals.grossProfit.toLocaleString()}`);
+      lines.push(`Margin,${projectTotals.marginPercent.toFixed(1)}%`);
+    }
+
+    // Create and download file
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${projectInfo.jobNumber || 'estimate'}_${isClientView ? 'proposal' : 'internal'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  }, [projectInfo, poolGeometry, tradeData, projectTotals]);
+
+  // Export to PDF (opens print dialog)
+  const exportToPDF = useCallback((isClientView: boolean) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups to export PDF');
+      return;
+    }
+
+    const date = new Date().toLocaleDateString();
+
+    // Build line items HTML
+    let lineItemsHTML = '';
+    TRADE_LIST.forEach(trade => {
+      const data = tradeData[trade.id];
+      if (data.enabled) {
+        const tradeItems = data.lineItems.filter(item => item.qty > 0);
+        if (tradeItems.length > 0) {
+          lineItemsHTML += `<tr class="trade-header"><td colspan="${isClientView ? 4 : 8}">${trade.name}</td></tr>`;
+          tradeItems.forEach(item => {
+            const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
+            const sellTotal = costTotal * 1.25;
+            if (isClientView) {
+              lineItemsHTML += `<tr><td>${item.description}</td><td>${item.qty}</td><td>${item.unit}</td><td>$${sellTotal.toLocaleString()}</td></tr>`;
+            } else {
+              lineItemsHTML += `<tr><td>${item.description}</td><td>${item.qty}</td><td>${item.unit}</td><td>$${item.materials.toLocaleString()}</td><td>$${item.equipment.toLocaleString()}</td><td>$${item.labor.toLocaleString()}</td><td>$${costTotal.toLocaleString()}</td><td>$${sellTotal.toLocaleString()}</td></tr>`;
+            }
+          });
+        }
+      }
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${isClientView ? 'Proposal' : 'Estimate'} - ${projectInfo.jobNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+          h1 { color: #1e40af; margin-bottom: 5px; }
+          h2 { color: #374151; font-size: 18px; margin-top: 20px; border-bottom: 2px solid #1e40af; padding-bottom: 5px; }
+          .header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; }
+          .company { font-size: 12px; color: #6b7280; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+          .info-section { background: #f3f4f6; padding: 15px; border-radius: 8px; }
+          .info-section h3 { margin: 0 0 10px 0; font-size: 14px; color: #1e40af; }
+          .info-row { display: flex; justify-content: space-between; font-size: 12px; margin: 5px 0; }
+          .info-label { color: #6b7280; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+          th { background: #1e40af; color: white; padding: 8px; text-align: left; }
+          td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
+          tr.trade-header { background: #dbeafe; font-weight: bold; }
+          .totals { margin-top: 20px; background: #f3f4f6; padding: 15px; border-radius: 8px; }
+          .totals-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+          .totals-row.highlight { font-weight: bold; font-size: 16px; color: #1e40af; border-top: 2px solid #1e40af; margin-top: 10px; padding-top: 10px; }
+          .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #6b7280; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>BlueCrew CostLab</h1>
+            <div class="company">Blue Crew Construction • Augusta, GA • (762) 994-6083</div>
+          </div>
+          <div style="text-align: right;">
+            <strong>${isClientView ? 'CLIENT PROPOSAL' : 'INTERNAL ESTIMATE'}</strong><br/>
+            <span style="font-size: 12px; color: #6b7280;">Date: ${date}</span>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-section">
+            <h3>Project Information</h3>
+            <div class="info-row"><span class="info-label">Job Number:</span><span>${projectInfo.jobNumber}</span></div>
+            <div class="info-row"><span class="info-label">Job Name:</span><span>${projectInfo.jobName}</span></div>
+            <div class="info-row"><span class="info-label">Owner:</span><span>${projectInfo.ownerName}</span></div>
+            <div class="info-row"><span class="info-label">Address:</span><span>${projectInfo.streetAddress}</span></div>
+            <div class="info-row"><span class="info-label">City/State:</span><span>${projectInfo.city}, ${projectInfo.state}</span></div>
+          </div>
+          <div class="info-section">
+            <h3>Pool Specifications</h3>
+            <div class="info-row"><span class="info-label">Shape:</span><span>${poolGeometry.poolShape}</span></div>
+            <div class="info-row"><span class="info-label">Dimensions:</span><span>${poolGeometry.length}' x ${poolGeometry.width}'</span></div>
+            <div class="info-row"><span class="info-label">Depth:</span><span>${poolGeometry.shallowDepth}' - ${poolGeometry.deepEnd}'</span></div>
+            <div class="info-row"><span class="info-label">Pool Gallons:</span><span>${poolGeometry.poolGallons.toLocaleString()}</span></div>
+            <div class="info-row"><span class="info-label">Spa Gallons:</span><span>${poolGeometry.spaGallons.toLocaleString()}</span></div>
+          </div>
+        </div>
+
+        <h2>Line Items</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>QTY</th>
+              <th>Unit</th>
+              ${isClientView ? '' : '<th>Materials</th><th>Equipment</th><th>Labor</th><th>Cost</th>'}
+              <th>${isClientView ? 'Price' : 'Sell'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineItemsHTML}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          ${isClientView ? `
+            <div class="totals-row"><span>Subtotal:</span><span>$${projectTotals.subtotal.toLocaleString()}</span></div>
+            <div class="totals-row"><span>Sales Tax (8%):</span><span>$${projectTotals.salesTax.toLocaleString()}</span></div>
+            <div class="totals-row highlight"><span>Contract Price:</span><span>$${projectTotals.contractPrice.toLocaleString()}</span></div>
+          ` : `
+            <div class="totals-row"><span>Materials Cost:</span><span>$${projectTotals.materialsCost.toLocaleString()}</span></div>
+            <div class="totals-row"><span>Equipment Cost:</span><span>$${projectTotals.equipmentCost.toLocaleString()}</span></div>
+            <div class="totals-row"><span>Labor Cost:</span><span>$${projectTotals.laborCost.toLocaleString()}</span></div>
+            <div class="totals-row" style="font-weight:bold;"><span>Total Cost:</span><span>$${projectTotals.totalCost.toLocaleString()}</span></div>
+            <div class="totals-row" style="margin-top:10px;"><span>Subtotal (with markup):</span><span>$${projectTotals.subtotal.toLocaleString()}</span></div>
+            <div class="totals-row"><span>Sales Tax (8%):</span><span>$${projectTotals.salesTax.toLocaleString()}</span></div>
+            <div class="totals-row highlight"><span>Contract Price:</span><span>$${projectTotals.contractPrice.toLocaleString()}</span></div>
+            <div class="totals-row" style="color:#10b981;"><span>Gross Profit:</span><span>$${projectTotals.grossProfit.toLocaleString()}</span></div>
+            <div class="totals-row" style="color:#10b981;"><span>Margin:</span><span>${projectTotals.marginPercent.toFixed(1)}%</span></div>
+          `}
+        </div>
+
+        <div class="footer">
+          <p>Blue Crew Construction • Augusta, GA • (762) 994-6083</p>
+          <p>Thank you for your business!</p>
+        </div>
+
+        <script>window.onload = function() { window.print(); }</script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    setShowExportMenu(false);
+  }, [projectInfo, poolGeometry, tradeData, projectTotals]);
+
   return (
     <div className="app">
       {/* Header */}
@@ -468,7 +692,25 @@ function App() {
             👤 Client
           </button>
           <button className="btn btn-save">💾 Save</button>
-          <button className="btn btn-export">📤 Export</button>
+          <div className="export-dropdown">
+            <button className="btn btn-export" onClick={() => setShowExportMenu(!showExportMenu)}>
+              📤 Export ▼
+            </button>
+            {showExportMenu && (
+              <div className="export-menu">
+                <div className="export-menu-section">
+                  <div className="export-menu-title">Internal (Full Details)</div>
+                  <button onClick={() => exportToPDF(false)}>📄 PDF - Internal</button>
+                  <button onClick={() => exportToCSV(false)}>📊 CSV - Internal</button>
+                </div>
+                <div className="export-menu-section">
+                  <div className="export-menu-title">Client (Proposal)</div>
+                  <button onClick={() => exportToPDF(true)}>📄 PDF - Client</button>
+                  <button onClick={() => exportToCSV(true)}>📊 CSV - Client</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
