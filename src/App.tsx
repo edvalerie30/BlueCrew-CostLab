@@ -115,8 +115,20 @@ const SCOPE_CONFIGS: Record<ProjectScope, { name: string; icon: string; categori
   },
 };
 
-// Default line items for each scope/category
-const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ description: string; unit: string; margin: number }>>> = {
+// Line item template with pricing data
+interface LineItemTemplate {
+  description: string;
+  unit: string;
+  margin: number;
+  materials?: number;
+  labor?: number;
+  equipment?: number;
+  subcontract?: number;
+  notes?: string;
+}
+
+// Default line items for each scope/category with pricing from spreadsheets
+const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, LineItemTemplate[]>> = {
   pool: {
     'Planning': [
       { description: 'Pool Design / Engineering', unit: 'LS', margin: 20 },
@@ -181,7 +193,7 @@ const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ descriptio
       { description: 'Mosaic Tile Accent', unit: 'SF', margin: 32 },
     ],
     'Deck': [
-      { description: 'Concrete Deck (4")', unit: 'SF', margin: 25 },
+      { description: 'Concrete Deck (4")', unit: 'SF', margin: 20, materials: 4.00, labor: 3.00 },
       { description: 'Cool Deck Finish', unit: 'SF', margin: 28 },
       { description: 'Travertine Pavers', unit: 'SF', margin: 30 },
       { description: 'Stamped Concrete', unit: 'SF', margin: 28 },
@@ -212,97 +224,99 @@ const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ descriptio
   },
   portable_spa: {
     'Spa Unit': [
-      { description: 'Hot Tub Unit (Standard)', unit: 'EA', margin: 25 },
-      { description: 'Hot Tub Unit (Premium)', unit: 'EA', margin: 28 },
-      { description: 'Hot Tub Unit (Luxury)', unit: 'EA', margin: 30 },
-      { description: 'Spa Cover (Insulated)', unit: 'EA', margin: 25 },
-      { description: 'Cover Lifter', unit: 'EA', margin: 25 },
+      { description: 'Trex Table and Trim around Spa', unit: 'LS', margin: 20, subcontract: 2450.00, notes: 'Caleb Bowen' },
+      { description: 'Trex Small side Door', unit: 'LS', margin: 20, subcontract: 550.00, notes: 'Caleb Bowen' },
+      { description: 'Trex Cap - Trex surrounding spa', unit: 'LF', margin: 20, materials: 17.00, labor: 1000.00 },
     ],
     'Electrical': [
-      { description: '50 Amp Circuit Installation', unit: 'LS', margin: 25 },
-      { description: '60 Amp Circuit Installation', unit: 'LS', margin: 25 },
-      { description: 'GFCI Breaker', unit: 'EA', margin: 22 },
-      { description: 'Conduit Run', unit: 'LF', margin: 22 },
-      { description: 'Disconnect Box', unit: 'EA', margin: 22 },
+      { description: 'Electrical (Spa)', unit: 'LS', margin: 20, subcontract: 400.00 },
+      { description: 'Main Feeder Connection', unit: 'LS', margin: 25, materials: 75.00, labor: 1500.00 },
+      { description: 'Ledge Lights - Sollos Black 2W', unit: 'EA', margin: 25, materials: 75.00, labor: 30.00, equipment: 36.00 },
+      { description: 'Low Voltage Cable #12 - 250ft', unit: 'Roll', margin: 22, materials: 235.00, labor: 230.00 },
+      { description: '300W Transformer', unit: 'EA', margin: 22, materials: 208.00, labor: 200.00 },
     ],
     'Site Prep': [
-      { description: 'Concrete Pad (4")', unit: 'SF', margin: 25 },
-      { description: 'Gravel Base Prep', unit: 'SF', margin: 22 },
-      { description: 'Paver Pad', unit: 'SF', margin: 28 },
-      { description: 'Deck Extension', unit: 'SF', margin: 28 },
-      { description: 'Gazebo/Pergola Pad', unit: 'SF', margin: 25 },
+      { description: 'Concrete Footer 2x3x1 ft', unit: 'CYD', margin: 25, materials: 200.00, labor: 100.00, equipment: 60.00 },
+      { description: 'Spa Concrete Floor', unit: 'SF', margin: 25, materials: 3.00, labor: 3.00 },
+      { description: 'Brick Steps (632F) 363 bricks', unit: 'LS', margin: 25, materials: 794.00, labor: 636.00 },
+      { description: 'Wall CMU Blocks', unit: 'CMU', margin: 25, materials: 2.06, labor: 12.00 },
     ],
     'Delivery': [
       { description: 'Spa Delivery (Standard)', unit: 'LS', margin: 20 },
       { description: 'Spa Delivery (Crane Required)', unit: 'LS', margin: 22 },
       { description: 'Setup & Start-Up', unit: 'LS', margin: 20 },
-      { description: 'Water Fill & Chemical Balance', unit: 'LS', margin: 20 },
     ],
     'Accessories': [
-      { description: 'Spa Steps (2-Tier)', unit: 'EA', margin: 25 },
-      { description: 'Spa Steps (3-Tier)', unit: 'EA', margin: 25 },
-      { description: 'Handrail', unit: 'EA', margin: 25 },
-      { description: 'Towel Bar', unit: 'EA', margin: 22 },
-      { description: 'LED Light Package', unit: 'SET', margin: 28 },
-      { description: 'Bluetooth Audio Upgrade', unit: 'EA', margin: 28 },
+      { description: 'Stone Pedestals - Fire bowls and pedestals', unit: 'EA', margin: 25, materials: 60.00, labor: 150.00 },
+      { description: 'Pedestals Veneer with 10% waste', unit: 'SF', margin: 25, materials: 12.00, labor: 14.00, notes: 'Eric Salas' },
+      { description: 'Travertine Cap Spa', unit: 'LF', margin: 28, materials: 17.00 },
+      { description: 'Fire Bowls', unit: 'EA', margin: 30, materials: 3515.43, labor: 240.00, notes: 'Eric Salas Installation' },
+      { description: 'Rebar Dowels', unit: 'Bar', margin: 22, materials: 13.13, notes: 'Caleb Bowen' },
     ],
   },
   pavilion: {
     'Structure': [
-      { description: 'Pavilion Kit (12x14)', unit: 'EA', margin: 28 },
-      { description: 'Pavilion Kit (14x16)', unit: 'EA', margin: 28 },
-      { description: 'Pavilion Kit (16x20)', unit: 'EA', margin: 28 },
-      { description: 'Pergola Kit (10x12)', unit: 'EA', margin: 28 },
-      { description: 'Pergola Kit (12x14)', unit: 'EA', margin: 28 },
-      { description: 'Custom Timber Frame', unit: 'LS', margin: 30 },
-      { description: 'Metal Roof System', unit: 'SF', margin: 28 },
-      { description: 'Shingle Roof System', unit: 'SF', margin: 25 },
+      { description: 'Pavilion 16\'x18\' - Alpine Pine Wrapping 10/12 pitch', unit: 'LS', margin: 20, subcontract: 21475.00, notes: 'Caleb Bowen' },
+      { description: 'Pavilion 14\'X16\' - Shiplap ceiling stained', unit: 'LS', margin: 20, subcontract: 17200.00, notes: 'Caleb Bowen' },
+      { description: 'Additions to Storage Area', unit: 'LS', margin: 20, subcontract: 800.00, notes: 'Caleb Bowen' },
+      { description: 'Bathroom and Storage - back framing and siding', unit: 'LS', margin: 20, subcontract: 13360.00, notes: 'Caleb Bowen' },
     ],
     'Concrete/Foundation': [
-      { description: 'Concrete Footings', unit: 'EA', margin: 25 },
-      { description: 'Concrete Slab (4")', unit: 'SF', margin: 25 },
-      { description: 'Stamped Concrete Floor', unit: 'SF', margin: 28 },
-      { description: 'Foundation Piers', unit: 'EA', margin: 25 },
-      { description: 'Grade Beam', unit: 'LF', margin: 25 },
+      { description: 'Concrete Footer 3\'x3\'x1ft', unit: 'CYD', margin: 20, materials: 190.00, labor: 116.67, equipment: 50.00, notes: 'To be poured with concrete' },
+      { description: 'Swim up bar Counter Top - Installed (40SF)', unit: 'EA', margin: 20, subcontract: 2500.00, notes: 'GA Granite' },
+      { description: 'Kitchen Counter Top (145.11SF)', unit: 'LS', margin: 20, subcontract: 7000.00, notes: 'GA Granite' },
+      { description: 'Bali Pitter Floor', unit: 'SF', margin: 25, materials: 3.00, labor: 3.00 },
+      { description: 'Floor Prep', unit: 'LS', margin: 25, equipment: 900.00 },
     ],
     'Flooring': [
       { description: 'Travertine Pavers', unit: 'SF', margin: 30 },
       { description: 'Porcelain Tile', unit: 'SF', margin: 28 },
       { description: 'Flagstone', unit: 'SF', margin: 30 },
       { description: 'Brick Pavers', unit: 'SF', margin: 28 },
-      { description: 'Decorative Concrete', unit: 'SF', margin: 25 },
     ],
     'Electrical & Lighting': [
-      { description: 'Electrical Rough-In', unit: 'LS', margin: 25 },
-      { description: 'Ceiling Fan(s)', unit: 'EA', margin: 25 },
-      { description: 'Recessed Lighting', unit: 'EA', margin: 25 },
-      { description: 'Pendant Lights', unit: 'EA', margin: 28 },
-      { description: 'Landscape Lighting', unit: 'EA', margin: 25 },
-      { description: 'Outlet Installation', unit: 'EA', margin: 22 },
-      { description: 'TV Mount & Wiring', unit: 'LS', margin: 25 },
+      { description: 'Electrical - Pavilion (6 sconces, fans, TV, outlets)', unit: 'LS', margin: 20, subcontract: 6000.00 },
+      { description: 'Sound System - Fosi Audio BT20A Amplifier', unit: 'LS', margin: 25, subcontract: 6000.00, notes: 'Amazon' },
+      { description: 'Ledge Lights - Sollos Black 2W', unit: 'EA', margin: 25, materials: 70.00 },
+      { description: 'Low Voltage Cable #12 - 250ft', unit: 'Roll', margin: 22, materials: 230.00, labor: 230.00 },
+      { description: '300W Transformer', unit: 'EA', margin: 22, materials: 180.00, labor: 180.00 },
     ],
     'Painting & Stain': [
-      { description: 'Exterior Stain (Posts/Beams)', unit: 'LS', margin: 25 },
-      { description: 'Paint (Trim/Ceiling)', unit: 'LS', margin: 25 },
-      { description: 'Clear Sealer', unit: 'LS', margin: 22 },
+      { description: 'Stain Pavilion & Painting', unit: 'LS', margin: 20, materials: 250.00, notes: 'Included with Caleb Bowen' },
     ],
     'Fireplace/Masonry': [
-      { description: 'Outdoor Fireplace (Prefab)', unit: 'EA', margin: 30 },
-      { description: 'Custom Brick Fireplace', unit: 'LS', margin: 32 },
-      { description: 'Stone Veneer Fireplace', unit: 'LS', margin: 32 },
-      { description: 'Outdoor Kitchen Island', unit: 'LS', margin: 30 },
-      { description: 'Built-In Grill', unit: 'EA', margin: 28 },
-      { description: 'Side Burner', unit: 'EA', margin: 28 },
-      { description: 'Refrigerator (Outdoor)', unit: 'EA', margin: 25 },
-      { description: 'Sink & Faucet', unit: 'EA', margin: 25 },
-      { description: 'Granite/Stone Countertop', unit: 'LF', margin: 30 },
+      { description: 'Cabinets - Masonry Center Blocks 8x8x16', unit: 'Block', margin: 20, materials: 2.08, labor: 3.50, notes: 'Augusta Concrete Block' },
+      { description: 'Rebar Dowels for Cabinet Walls', unit: 'Bar', margin: 22, materials: 13.11 },
+      { description: 'Bagged Concrete - Center block cell filling', unit: 'EA', margin: 22, materials: 6.00 },
+      { description: 'Sand Bag - Augusta Concrete Blocks', unit: 'EA', margin: 22, materials: 80.00 },
+      { description: 'Mortar Type N', unit: 'EA', margin: 22, materials: 18.00 },
+      { description: 'Cabinet Veneer with 10% waste', unit: 'SF', margin: 22, materials: 10.50, labor: 14.00, subcontract: 1.18, notes: 'Eric Salas' },
+      { description: 'Wall Veneer Back Tail with 10% waste', unit: 'SF', margin: 22, materials: 10.50, labor: 14.00, subcontract: 1.18, notes: 'Eric Salas' },
+      { description: 'Large Format Tile Mortar', unit: 'EA', margin: 22, materials: 42.00 },
+      { description: 'Fire Bowls', unit: 'EA', margin: 30, materials: 3515.43, labor: 240.00, notes: 'Eric Salas Installation' },
+      { description: 'Fire Brick 4.5x9 with 10% waste', unit: 'EA', margin: 25, materials: 5.00, labor: 5.00 },
+      { description: 'Fireplace CMU Blocks', unit: 'SF', margin: 25, materials: 2.00, labor: 12.00 },
+      { description: 'Wall Veneer', unit: 'SF', margin: 25, materials: 4.55, labor: 12.00, notes: 'Eric Salas' },
+      { description: 'Fireplace Travertine Cap Pedestals', unit: 'EA', margin: 28, materials: 24.00, labor: 28.00, notes: 'Eric Salas' },
+      { description: 'Fireplace Wood Mantle', unit: 'EA', margin: 25, materials: 360.00 },
+      { description: 'Fireplace Chimney Cap', unit: 'EA', margin: 25, materials: 500.00, labor: 250.00, notes: 'Caleb Bowen' },
     ],
     'Accessories': [
-      { description: 'Privacy Curtains/Screens', unit: 'SET', margin: 28 },
-      { description: 'Ceiling Heater', unit: 'EA', margin: 28 },
-      { description: 'Mosquito Misting System', unit: 'LS', margin: 28 },
-      { description: 'Outdoor Bar Seating', unit: 'EA', margin: 25 },
-      { description: 'Storage Cabinet', unit: 'EA', margin: 25 },
+      { description: '30" Lonestar Select Drop-In Grill NG 4 Burner 60000 BTUs', unit: 'EA', margin: 25, materials: 1131.07 },
+      { description: 'Stainless Steel Ice Chest', unit: 'EA', margin: 25, materials: 419.26 },
+      { description: 'Standard Refrigerator', unit: 'EA', margin: 25, materials: 33.46 },
+      { description: '25" Double Doors - Stainless Steel #33570', unit: 'EA', margin: 25, materials: 263.82 },
+      { description: '38" Double Doors - Stainless Steel', unit: 'EA', margin: 25, materials: 374.70 },
+      { description: '30" Door/Drawer Combo w/2 Drawers', unit: 'EA', margin: 25, materials: 521.89 },
+      { description: '38" Door/Drawer Combo w/2 Drawers', unit: 'EA', margin: 25, materials: 601.55 },
+      { description: 'Double Trash Drawer', unit: 'EA', margin: 25, materials: 594.53 },
+      { description: 'Triple Drawers 2+1 Stainless Steel', unit: 'EA', margin: 25, materials: 483.60 },
+      { description: 'Kegerator with Single Tap', unit: 'EA', margin: 25, materials: 2081.20 },
+      { description: 'BBQGuys Signature 18" Paper Towel/Drawer Combo', unit: 'EA', margin: 25, materials: 602.99 },
+      { description: 'Pool Veneer', unit: 'SF', margin: 22, materials: 10.50, labor: 14.00 },
+      { description: 'Plumbing - Kitchen Sink Hot and Cold water', unit: 'LS', margin: 20, subcontract: 3500.00 },
+      { description: 'Tankless Water Heater', unit: 'LS', margin: 25, materials: 949.00, equipment: 350.00, subcontract: 2200.00 },
+      { description: 'Large Kitchen Sink with Faucet (Bull #12391)', unit: 'EA', margin: 25, materials: 215.30 },
     ],
   },
   retaining_wall: {
@@ -318,11 +332,11 @@ const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ descriptio
       { description: 'Geogrid Reinforcement', unit: 'SF', margin: 25 },
     ],
     'Block/Stone': [
+      { description: 'CMU Block, per block', unit: 'EA', margin: 25, materials: 2.10, labor: 12.00 },
       { description: 'Segmental Retaining Wall Block', unit: 'SF', margin: 28 },
       { description: 'Natural Stone (Stackable)', unit: 'SF', margin: 30 },
       { description: 'Boulder Wall', unit: 'TON', margin: 28 },
       { description: 'Poured Concrete Wall', unit: 'SF', margin: 25 },
-      { description: 'Block Adhesive', unit: 'TUBE', margin: 22 },
     ],
     'Caps & Finish': [
       { description: 'Cap Block (Standard)', unit: 'LF', margin: 28 },
@@ -348,46 +362,42 @@ const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ descriptio
       { description: 'Excavation & Prep', unit: 'LS', margin: 22 },
       { description: 'Compacted Base', unit: 'TON', margin: 22 },
       { description: 'Concrete Footing', unit: 'SF', margin: 25 },
-      { description: 'Fire Brick Base', unit: 'SF', margin: 28 },
+      { description: 'Concrete Deck', unit: 'SF', margin: 20, materials: 4.00, labor: 3.00 },
     ],
     'Masonry': [
-      { description: 'Fire Pit Block Kit', unit: 'EA', margin: 28 },
-      { description: 'Custom Block Fire Pit', unit: 'LS', margin: 30 },
-      { description: 'Brick Fire Pit', unit: 'LS', margin: 30 },
+      { description: 'Onyx Black Brick', unit: 'EA', margin: 25, materials: 7.81, labor: 12.00 },
+      { description: 'Mortar Bag', unit: 'EA', margin: 22, materials: 17.95, notes: 'Price per bag, Pool 360' },
+      { description: 'CMU Block, per block', unit: 'EA', margin: 25, materials: 2.10, labor: 12.00 },
+      { description: 'HP Storm Dual Wall Pipe', unit: 'LS', margin: 22, materials: 551.60 },
       { description: 'Fire Brick Lining', unit: 'SF', margin: 28 },
-      { description: 'Outdoor Fireplace (Masonry)', unit: 'LS', margin: 32 },
     ],
     'Stone/Veneer': [
-      { description: 'Natural Stone Veneer', unit: 'SF', margin: 32 },
-      { description: 'Manufactured Stone Veneer', unit: 'SF', margin: 30 },
-      { description: 'Flagstone Cap', unit: 'LF', margin: 30 },
-      { description: 'Granite Cap', unit: 'LF', margin: 32 },
-      { description: 'Stucco Finish', unit: 'SF', margin: 25 },
+      { description: 'Splitface Travertine', unit: 'EA', margin: 28, materials: 12.00, labor: 14.00 },
+      { description: 'Travertine Cap 6x12 (LFT)', unit: 'EA', margin: 28, materials: 17.00, labor: 14.00 },
+      { description: 'Wall Veneer', unit: 'SF', margin: 25, materials: 4.55, labor: 12.00, notes: 'Eric Salas' },
+      { description: 'Fireplace Travertine Cap', unit: 'EA', margin: 28, materials: 24.00, labor: 28.00, notes: 'Eric Salas' },
+      { description: 'Thinset Stain', unit: 'LS', margin: 25, materials: 225.00 },
     ],
     'Gas Line': [
       { description: 'Gas Line Run (Trenching)', unit: 'LF', margin: 25 },
       { description: 'Gas Shutoff Valve', unit: 'EA', margin: 22 },
       { description: 'Gas Connection', unit: 'LS', margin: 25 },
       { description: 'LP Tank Installation', unit: 'EA', margin: 25 },
-      { description: 'Gas Pressure Test', unit: 'LS', margin: 20 },
     ],
     'Fire Features': [
-      { description: 'Gas Burner Ring (Standard)', unit: 'EA', margin: 28 },
-      { description: 'Gas Burner Ring (Large)', unit: 'EA', margin: 28 },
+      { description: 'Firepit Valencia Push Button Ignition [HPC]', unit: 'EA', margin: 25, materials: 1605.00, labor: 400.00 },
+      { description: 'Valencia Fire Pit [No Sleeve] Champlain Grey', unit: 'EA', margin: 25, materials: 1333.47, labor: 400.00 },
+      { description: 'Fire Bowls', unit: 'EA', margin: 30, materials: 3515.43, labor: 240.00 },
       { description: 'Fire Glass', unit: 'LB', margin: 30 },
       { description: 'Lava Rock', unit: 'LB', margin: 25 },
-      { description: 'Fire Bowls', unit: 'EA', margin: 30 },
-      { description: 'Tiki Torches (Gas)', unit: 'EA', margin: 28 },
-      { description: 'Fire/Water Bowl', unit: 'EA', margin: 32 },
     ],
     'Seating': [
       { description: 'Integrated Stone Bench', unit: 'LF', margin: 28 },
       { description: 'Seat Wall (Block)', unit: 'LF', margin: 28 },
       { description: 'Concrete Seat Wall', unit: 'LF', margin: 25 },
-      { description: 'Built-In Seating w/ Cushions', unit: 'LF', margin: 30 },
     ],
     'Lighting': [
-      { description: 'Low Voltage Landscape Lights', unit: 'EA', margin: 25 },
+      { description: 'Ledge Lights - Sollos Black 2W', unit: 'EA', margin: 25, materials: 75.00, labor: 35.00 },
       { description: 'Step Lights', unit: 'EA', margin: 25 },
       { description: 'LED Strip Lighting', unit: 'LF', margin: 28 },
       { description: 'Transformer & Wiring', unit: 'LS', margin: 22 },
@@ -411,7 +421,7 @@ const initializeProposal = (scope: ProjectScope): ProposalContent => {
   };
 };
 
-// Initialize categories with default line items
+// Initialize categories with default line items (including pricing from spreadsheets)
 const initializeScope = (scope: ProjectScope): ScopeData => {
   const config = SCOPE_CONFIGS[scope];
   const defaultItems = DEFAULT_LINE_ITEMS[scope] || {};
@@ -426,12 +436,12 @@ const initializeScope = (scope: ProjectScope): ScopeData => {
         description: item.description,
         qty: 0,
         unit: item.unit,
-        materials: 0,
-        equipment: 0,
-        labor: 0,
+        materials: item.materials || 0,
+        equipment: item.equipment || 0,
+        labor: item.labor || 0,
         margin: item.margin,
-        subcontract: 0,
-        notes: '',
+        subcontract: item.subcontract || 0,
+        notes: item.notes || '',
       })),
     })),
     proposal: initializeProposal(scope),
