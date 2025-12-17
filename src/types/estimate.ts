@@ -5,6 +5,8 @@
 
 // All supported trade categories
 export type TradeCategory =
+  | 'planning'
+  | 'site_preparation'
   | 'inground_pool'
   | 'inground_spa'
   | 'access'

@@ -708,6 +708,11 @@ body {
   text-align: right;
 }
 
+.line-items-table .margin-input {
+  width: 55px;
+  text-align: center;
+}
+
 .cost-total {
   color: var(--text-secondary);
 }

@@ -18,6 +18,7 @@ interface LineItem {
   materials: number;
   equipment: number;
   labor: number;
+  margin: number; // Markup percentage (e.g., 25 = 25%)
   notes: string;
 }
 
@@ -96,6 +97,7 @@ function App() {
           materials: p.baseCost,
           equipment: 0,
           labor: 0,
+          margin: 25, // Default 25% markup
           notes: p.notes || '',
         })),
       };
@@ -116,6 +118,7 @@ function App() {
     materials: 0,
     equipment: 0,
     labor: 0,
+    margin: 25,
     unit: 'EA',
   });
 
@@ -360,6 +363,7 @@ function App() {
       materials: newItemForm.materials,
       equipment: newItemForm.equipment,
       labor: newItemForm.labor,
+      margin: newItemForm.margin,
       notes: pricing?.notes || '',
     };
 
@@ -379,6 +383,7 @@ function App() {
       materials: 0,
       equipment: 0,
       labor: 0,
+      margin: 25,
       unit: 'EA',
     });
     setShowAddItemModal(null);
@@ -392,8 +397,10 @@ function App() {
       const itemMaterials = item.qty * item.materials;
       const itemEquipment = item.qty * item.equipment;
       const itemLabor = item.qty * item.labor;
-      costTotal += itemMaterials + itemEquipment + itemLabor;
-      sellTotal += (itemMaterials + itemEquipment + itemLabor) * 1.25; // 25% markup
+      const itemCost = itemMaterials + itemEquipment + itemLabor;
+      const markupMultiplier = 1 + (item.margin / 100);
+      costTotal += itemCost;
+      sellTotal += itemCost * markupMultiplier;
     });
     return { costTotal, sellTotal };
   }, []);
@@ -403,6 +410,8 @@ function App() {
     let materialsCost = 0;
     let equipmentCost = 0;
     let laborCost = 0;
+    let subtotal = 0;
+    let taxableSubtotal = 0; // Materials + Equipment sell price for tax
     let activeTradesCount = 0;
     let totalLineItems = 0;
 
@@ -412,19 +421,27 @@ function App() {
         trade.lineItems.forEach((item) => {
           if (item.qty > 0) {
             totalLineItems++;
-            materialsCost += item.qty * item.materials;
-            equipmentCost += item.qty * item.equipment;
-            laborCost += item.qty * item.labor;
+            const itemMaterials = item.qty * item.materials;
+            const itemEquipment = item.qty * item.equipment;
+            const itemLabor = item.qty * item.labor;
+            const itemCost = itemMaterials + itemEquipment + itemLabor;
+            const markupMultiplier = 1 + (item.margin / 100);
+            const itemSell = itemCost * markupMultiplier;
+
+            materialsCost += itemMaterials;
+            equipmentCost += itemEquipment;
+            laborCost += itemLabor;
+            subtotal += itemSell;
+            // Taxable amount is materials + equipment with their markup
+            taxableSubtotal += (itemMaterials + itemEquipment) * markupMultiplier;
           }
         });
       }
     });
 
     const totalCost = materialsCost + equipmentCost + laborCost;
-    const subtotal = totalCost * 1.25; // 25% markup
     // Sales tax only applies to materials and equipment, not labor
-    const taxableAmount = (materialsCost + equipmentCost) * 1.25;
-    const salesTax = taxableAmount * 0.08;
+    const salesTax = taxableSubtotal * 0.08;
     const contractPrice = subtotal + salesTax;
     const grossProfit = contractPrice - totalCost;
     const marginPercent = totalCost > 0 ? (grossProfit / contractPrice) * 100 : 0;
@@ -471,7 +488,7 @@ function App() {
     if (isClientView) {
       lines.push('Trade,Description,QTY,Unit,Sell Total');
     } else {
-      lines.push('Trade,Description,QTY,Unit,Materials,Equipment,Labor,Cost Total,Sell Total');
+      lines.push('Trade,Description,QTY,Unit,Materials,Equipment,Labor,Margin %,Cost Total,Sell Total');
     }
 
     // Line items
@@ -481,11 +498,11 @@ function App() {
         data.lineItems.forEach(item => {
           if (item.qty > 0) {
             const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
-            const sellTotal = costTotal * 1.25;
+            const sellTotal = costTotal * (1 + item.margin / 100);
             if (isClientView) {
               lines.push(`"${trade.name}","${item.description}",${item.qty},${item.unit},$${sellTotal.toFixed(2)}`);
             } else {
-              lines.push(`"${trade.name}","${item.description}",${item.qty},${item.unit},$${item.materials.toFixed(2)},$${item.equipment.toFixed(2)},$${item.labor.toFixed(2)},$${costTotal.toFixed(2)},$${sellTotal.toFixed(2)}`);
+              lines.push(`"${trade.name}","${item.description}",${item.qty},${item.unit},$${item.materials.toFixed(2)},$${item.equipment.toFixed(2)},$${item.labor.toFixed(2)},${item.margin}%,$${costTotal.toFixed(2)},$${sellTotal.toFixed(2)}`);
             }
           }
         });
@@ -546,14 +563,14 @@ function App() {
       if (data.enabled) {
         const tradeItems = data.lineItems.filter(item => item.qty > 0);
         if (tradeItems.length > 0) {
-          lineItemsHTML += `<tr class="trade-header"><td colspan="${isClientView ? 4 : 8}">${trade.name}</td></tr>`;
+          lineItemsHTML += `<tr class="trade-header"><td colspan="${isClientView ? 4 : 9}">${trade.name}</td></tr>`;
           tradeItems.forEach(item => {
             const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
-            const sellTotal = costTotal * 1.25;
+            const sellTotal = costTotal * (1 + item.margin / 100);
             if (isClientView) {
               lineItemsHTML += `<tr><td>${item.description}</td><td>${item.qty}</td><td>${item.unit}</td><td>$${sellTotal.toLocaleString()}</td></tr>`;
             } else {
-              lineItemsHTML += `<tr><td>${item.description}</td><td>${item.qty}</td><td>${item.unit}</td><td>$${item.materials.toLocaleString()}</td><td>$${item.equipment.toLocaleString()}</td><td>$${item.labor.toLocaleString()}</td><td>$${costTotal.toLocaleString()}</td><td>$${sellTotal.toLocaleString()}</td></tr>`;
+              lineItemsHTML += `<tr><td>${item.description}</td><td>${item.qty}</td><td>${item.unit}</td><td>$${item.materials.toLocaleString()}</td><td>$${item.equipment.toLocaleString()}</td><td>$${item.labor.toLocaleString()}</td><td>${item.margin}%</td><td>$${costTotal.toLocaleString()}</td><td>$${sellTotal.toLocaleString()}</td></tr>`;
             }
           });
         }
@@ -625,7 +642,7 @@ function App() {
               <th>Description</th>
               <th>QTY</th>
               <th>Unit</th>
-              ${isClientView ? '' : '<th>Materials</th><th>Equipment</th><th>Labor</th><th>Cost</th>'}
+              ${isClientView ? '' : '<th>Materials</th><th>Equipment</th><th>Labor</th><th>Margin</th><th>Cost</th>'}
               <th>${isClientView ? 'Price' : 'Sell'}</th>
             </tr>
           </thead>
@@ -1036,6 +1053,7 @@ function App() {
                             <th>Materials</th>
                             <th>Equipment</th>
                             <th>Labor</th>
+                            <th>Margin %</th>
                             <th>Cost Total</th>
                             <th>Sell Total</th>
                           </tr>
@@ -1043,7 +1061,7 @@ function App() {
                         <tbody>
                           {data.lineItems.map((item) => {
                             const costTotal = item.qty * item.materials + item.qty * item.equipment + item.qty * item.labor;
-                            const sellTotal = costTotal * 1.25;
+                            const sellTotal = costTotal * (1 + item.margin / 100);
                             return (
                               <tr key={item.id}>
                                 <td className="description">
@@ -1124,6 +1142,21 @@ function App() {
                                         trade.id,
                                         item.id,
                                         'labor',
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    className="margin-input"
+                                    value={item.margin}
+                                    onChange={(e) =>
+                                      updateLineItem(
+                                        trade.id,
+                                        item.id,
+                                        'margin',
                                         parseFloat(e.target.value) || 0
                                       )
                                     }
@@ -1327,14 +1360,25 @@ function App() {
                   />
                 </div>
               </div>
-              <div className="form-group">
-                <label>Labor ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={newItemForm.labor}
-                  onChange={(e) => setNewItemForm(prev => ({ ...prev, labor: parseFloat(e.target.value) || 0 }))}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Labor ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={newItemForm.labor}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, labor: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Margin (%)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={newItemForm.margin}
+                    onChange={(e) => setNewItemForm(prev => ({ ...prev, margin: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
               </div>
             </div>
             <div className="modal-footer">
