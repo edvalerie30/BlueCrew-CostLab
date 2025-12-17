@@ -10,7 +10,6 @@ import type {
   LineItem,
   TradeSummary,
   TradeCategory,
-  ReviewFlag,
   DrawingAnalysis,
   ChangeRecord,
 } from '../types/estimate';

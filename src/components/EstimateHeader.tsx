@@ -3,7 +3,6 @@
  * Displays project info and overall estimate summary
  */
 
-import React from 'react';
 import { useEstimateStore } from '../store/estimateStore';
 import { formatCurrency, formatPercent } from '../utils/format';
 

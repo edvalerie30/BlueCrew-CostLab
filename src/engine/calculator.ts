@@ -4,7 +4,6 @@
  */
 
 import type {
-  Estimate,
   LineItem,
   TradeSummary,
   TradeCategory,

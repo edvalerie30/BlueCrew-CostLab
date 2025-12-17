@@ -3,7 +3,7 @@
  * Displays and allows editing of individual line items
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { LineItem } from '../types/estimate';
 import { useEstimateStore } from '../store/estimateStore';
 import { formatCurrency, formatPercent } from '../utils/format';

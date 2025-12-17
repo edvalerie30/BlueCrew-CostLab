@@ -3,7 +3,6 @@
  * Displays and manages review flags for estimator approval
  */
 
-import React from 'react';
 import type { ReviewFlag } from '../types/estimate';
 import { useEstimateStore } from '../store/estimateStore';
 import { getTradeConfig } from '../data/trades';
