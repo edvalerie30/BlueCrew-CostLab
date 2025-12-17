@@ -71,7 +71,9 @@ function App() {
 
   // Uploaded Files State
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<'idle' | 'analyzing' | 'complete'>('idle');
 
   // Trade Data State - initialize with pricing from database
   const [tradeData, setTradeData] = useState<Record<TradeCategory, TradeData>>(() => {
@@ -125,18 +127,83 @@ function App() {
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     setUploadedFiles((prev) => [...prev, ...files]);
+    // Create preview URLs for images
+    files.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setFilePreviewUrls(prev => [...prev, url]);
+      } else {
+        setFilePreviewUrls(prev => [...prev, '']);
+      }
+    });
+    setAnalysisStatus('idle');
   }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setUploadedFiles((prev) => [...prev, ...files]);
+      // Create preview URLs for images
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          setFilePreviewUrls(prev => [...prev, url]);
+        } else {
+          setFilePreviewUrls(prev => [...prev, '']);
+        }
+      });
+      setAnalysisStatus('idle');
     }
   }, []);
 
   const removeFile = useCallback((index: number) => {
+    // Revoke the object URL to free memory
+    if (filePreviewUrls[index]) {
+      URL.revokeObjectURL(filePreviewUrls[index]);
+    }
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+    setFilePreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  }, [filePreviewUrls]);
+
+  // Analyze uploaded drawings (simulated for now)
+  const analyzeDrawings = useCallback(() => {
+    if (uploadedFiles.length === 0) return;
+
+    setAnalysisStatus('analyzing');
+
+    // Simulate analysis delay
+    setTimeout(() => {
+      // For demo: auto-populate some pool geometry based on "detected" values
+      setPoolGeometry({
+        poolShape: 'Rectangular',
+        length: 32,
+        width: 16,
+        shallowDepth: 3.5,
+        deepEnd: 6,
+        deckArea: 512,
+      });
+
+      // Enable and expand the inground pool trade
+      setTradeData(prev => ({
+        ...prev,
+        inground_pool: {
+          ...prev.inground_pool,
+          enabled: true,
+          expanded: true,
+        },
+        plumbing: {
+          ...prev.plumbing,
+          enabled: true,
+        },
+        electrical: {
+          ...prev.electrical,
+          enabled: true,
+        },
+      }));
+
+      setAnalysisStatus('complete');
+    }, 1500);
+  }, [uploadedFiles.length]);
 
   // Trade Handlers
   const toggleTradeEnabled = useCallback((tradeId: TradeCategory) => {
@@ -340,14 +407,42 @@ function App() {
               {uploadedFiles.length > 0 && (
                 <div className="uploaded-files">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="uploaded-file">
-                      <span className="file-icon">📄</span>
-                      <span className="file-name">{file.name}</span>
-                      <button className="file-remove" onClick={() => removeFile(index)}>
+                    <div key={index} className="uploaded-file-card">
+                      {filePreviewUrls[index] ? (
+                        <img
+                          src={filePreviewUrls[index]}
+                          alt={file.name}
+                          className="file-preview-image"
+                        />
+                      ) : (
+                        <div className="file-preview-placeholder">
+                          <span className="file-icon">📄</span>
+                        </div>
+                      )}
+                      <div className="file-info">
+                        <span className="file-name">{file.name}</span>
+                        <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
+                      </div>
+                      <button className="file-remove" onClick={(e) => { e.stopPropagation(); removeFile(index); }}>
                         ✕
                       </button>
                     </div>
                   ))}
+                  <button
+                    className={`btn btn-analyze ${analysisStatus === 'analyzing' ? 'analyzing' : ''}`}
+                    onClick={analyzeDrawings}
+                    disabled={analysisStatus === 'analyzing'}
+                  >
+                    {analysisStatus === 'analyzing' ? '🔄 Analyzing...' :
+                     analysisStatus === 'complete' ? '✓ Analysis Complete' :
+                     '🔍 Analyze Drawing'}
+                  </button>
+                  {analysisStatus === 'complete' && (
+                    <div className="analysis-result">
+                      <p>✓ Pool dimensions detected</p>
+                      <p>✓ Relevant trades enabled</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

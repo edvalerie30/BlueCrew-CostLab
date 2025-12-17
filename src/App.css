@@ -300,6 +300,100 @@ body {
   color: var(--accent-red);
 }
 
+/* File Preview Cards */
+.uploaded-file-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: var(--bg-input);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.file-preview-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.file-preview-placeholder {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.file-preview-placeholder .file-icon {
+  font-size: 1.5rem;
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.file-size {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* Analyze Button */
+.btn-analyze {
+  width: 100%;
+  margin-top: 0.75rem;
+  background: var(--accent-blue);
+  color: white;
+  justify-content: center;
+}
+
+.btn-analyze:hover {
+  background: var(--accent-blue-light);
+}
+
+.btn-analyze.analyzing {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: wait;
+}
+
+.btn-analyze:disabled {
+  opacity: 0.7;
+}
+
+/* Analysis Result */
+.analysis-result {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius);
+}
+
+.analysis-result p {
+  font-size: 0.75rem;
+  color: var(--accent-green);
+  margin: 0.25rem 0;
+}
+
+.analysis-result p:first-child {
+  margin-top: 0;
+}
+
+.analysis-result p:last-child {
+  margin-bottom: 0;
+}
+
 /* Form Inputs */
 .form-group {
   margin-bottom: 0.75rem;
