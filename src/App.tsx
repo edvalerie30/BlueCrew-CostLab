@@ -405,31 +405,33 @@ function App() {
                 />
               </div>
               {uploadedFiles.length > 0 && (
-                <div className="uploaded-files">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="uploaded-file-card">
-                      {filePreviewUrls[index] ? (
-                        <img
-                          src={filePreviewUrls[index]}
-                          alt={file.name}
-                          className="file-preview-image"
-                        />
-                      ) : (
-                        <div className="file-preview-placeholder">
-                          <span className="file-icon">📄</span>
+                <>
+                  <div className="uploaded-files-list">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="uploaded-file-card">
+                        {filePreviewUrls[index] ? (
+                          <img
+                            src={filePreviewUrls[index]}
+                            alt={file.name}
+                            className="file-preview-image"
+                          />
+                        ) : (
+                          <div className="file-preview-placeholder">
+                            <span className="file-icon">📄</span>
+                          </div>
+                        )}
+                        <div className="file-info">
+                          <span className="file-name">{file.name}</span>
+                          <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
                         </div>
-                      )}
-                      <div className="file-info">
-                        <span className="file-name">{file.name}</span>
-                        <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
+                        <button className="file-remove" onClick={(e) => { e.stopPropagation(); removeFile(index); }}>
+                          ✕
+                        </button>
                       </div>
-                      <button className="file-remove" onClick={(e) => { e.stopPropagation(); removeFile(index); }}>
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   <button
-                    className={`btn btn-analyze ${analysisStatus === 'analyzing' ? 'analyzing' : ''}`}
+                    className={`btn btn-analyze ${analysisStatus === 'analyzing' ? 'analyzing' : ''} ${analysisStatus === 'complete' ? 'complete' : ''}`}
                     onClick={analyzeDrawings}
                     disabled={analysisStatus === 'analyzing'}
                   >
@@ -443,7 +445,7 @@ function App() {
                       <p>✓ Relevant trades enabled</p>
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           </div>

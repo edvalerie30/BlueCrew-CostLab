@@ -260,6 +260,12 @@ body {
   margin-top: 0.75rem;
 }
 
+.uploaded-files-list {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
 .uploaded-file {
   display: flex;
   align-items: center;
@@ -351,10 +357,13 @@ body {
 /* Analyze Button */
 .btn-analyze {
   width: 100%;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
   background: var(--accent-blue);
   color: white;
   justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
 .btn-analyze:hover {
@@ -365,6 +374,11 @@ body {
   background: var(--bg-hover);
   color: var(--text-secondary);
   cursor: wait;
+}
+
+.btn-analyze.complete {
+  background: var(--accent-green);
+  color: white;
 }
 
 .btn-analyze:disabled {
