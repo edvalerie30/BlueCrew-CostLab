@@ -115,6 +115,287 @@ const SCOPE_CONFIGS: Record<ProjectScope, { name: string; icon: string; categori
   },
 };
 
+// Default line items for each scope/category
+const DEFAULT_LINE_ITEMS: Record<ProjectScope, Record<string, Array<{ description: string; unit: string; margin: number }>>> = {
+  pool: {
+    'Planning': [
+      { description: 'Pool Design / Engineering', unit: 'LS', margin: 20 },
+      { description: 'Building Permit', unit: 'LS', margin: 15 },
+      { description: 'Survey / Stakeout', unit: 'LS', margin: 20 },
+      { description: 'HOA Approval / Coordination', unit: 'LS', margin: 15 },
+      { description: 'Structural Engineering', unit: 'LS', margin: 20 },
+    ],
+    'Site Prep': [
+      { description: 'Clear & Grub', unit: 'LS', margin: 22 },
+      { description: 'Tree Removal', unit: 'EA', margin: 22 },
+      { description: 'Temporary Fencing', unit: 'LF', margin: 20 },
+      { description: 'Layout & Staking', unit: 'LS', margin: 20 },
+      { description: 'Silt Fence / Erosion Control', unit: 'LF', margin: 20 },
+      { description: 'Utility Locates', unit: 'LS', margin: 15 },
+    ],
+    'Excavation': [
+      { description: 'Pool Excavation', unit: 'CY', margin: 22 },
+      { description: 'Spoils Removal / Haul Off', unit: 'LD', margin: 22 },
+      { description: 'Over-Dig (Rock/Groundwater)', unit: 'CY', margin: 25 },
+      { description: 'Fine Grade', unit: 'SF', margin: 22 },
+      { description: 'Dewatering', unit: 'DAY', margin: 25 },
+    ],
+    'Steel & Gunite': [
+      { description: 'Steel Rebar Package', unit: 'LS', margin: 25 },
+      { description: 'Gunite / Shotcrete Shell', unit: 'SF', margin: 28 },
+      { description: 'Bond Beam', unit: 'LF', margin: 25 },
+      { description: 'Step / Bench Forms', unit: 'EA', margin: 25 },
+      { description: 'Spa Spillway', unit: 'EA', margin: 28 },
+    ],
+    'Plumbing': [
+      { description: 'Main Drain(s)', unit: 'EA', margin: 25 },
+      { description: 'Skimmer(s)', unit: 'EA', margin: 25 },
+      { description: 'Return Inlets', unit: 'EA', margin: 25 },
+      { description: 'Spa Jets', unit: 'EA', margin: 25 },
+      { description: 'Water Feature Plumbing', unit: 'EA', margin: 25 },
+      { description: 'Autofill', unit: 'EA', margin: 25 },
+      { description: 'Equipment Pad Plumbing', unit: 'LS', margin: 25 },
+    ],
+    'Electrical': [
+      { description: 'Sub-Panel Installation', unit: 'EA', margin: 25 },
+      { description: 'Pool/Spa Bonding', unit: 'LS', margin: 25 },
+      { description: 'Light Niche(s)', unit: 'EA', margin: 25 },
+      { description: 'LED Pool Light(s)', unit: 'EA', margin: 28 },
+      { description: 'Equipment Power Wiring', unit: 'LS', margin: 25 },
+      { description: 'GFCI Outlets', unit: 'EA', margin: 22 },
+    ],
+    'Equipment': [
+      { description: 'Variable Speed Pump', unit: 'EA', margin: 28 },
+      { description: 'Cartridge Filter', unit: 'EA', margin: 28 },
+      { description: 'Gas Heater', unit: 'EA', margin: 25 },
+      { description: 'Salt Chlorine Generator', unit: 'EA', margin: 30 },
+      { description: 'Pool Automation System', unit: 'EA', margin: 30 },
+      { description: 'Check Valves / Unions', unit: 'SET', margin: 25 },
+      { description: 'Equipment Pad (Concrete)', unit: 'SF', margin: 22 },
+    ],
+    'Tile & Coping': [
+      { description: 'Cantilever Coping', unit: 'LF', margin: 30 },
+      { description: 'Bullnose Coping (Upgrade)', unit: 'LF', margin: 32 },
+      { description: 'Waterline Tile', unit: 'LF', margin: 30 },
+      { description: 'Step/Bench Tile', unit: 'SF', margin: 30 },
+      { description: 'Mosaic Tile Accent', unit: 'SF', margin: 32 },
+    ],
+    'Deck': [
+      { description: 'Concrete Deck (4")', unit: 'SF', margin: 25 },
+      { description: 'Cool Deck Finish', unit: 'SF', margin: 28 },
+      { description: 'Travertine Pavers', unit: 'SF', margin: 30 },
+      { description: 'Stamped Concrete', unit: 'SF', margin: 28 },
+      { description: 'Expansion Joints', unit: 'LF', margin: 22 },
+    ],
+    'Interior Finish': [
+      { description: 'Standard White Plaster', unit: 'SF', margin: 28 },
+      { description: 'Pebble Finish (Standard)', unit: 'SF', margin: 30 },
+      { description: 'Pebble Finish (Premium)', unit: 'SF', margin: 32 },
+      { description: 'Glass Bead Finish', unit: 'SF', margin: 32 },
+      { description: 'Quartz Finish', unit: 'SF', margin: 30 },
+    ],
+    'Water Features': [
+      { description: 'Sheer Descent', unit: 'EA', margin: 32 },
+      { description: 'Raised Wall w/ Sheer Descent', unit: 'LS', margin: 32 },
+      { description: 'Deck Jets', unit: 'EA', margin: 30 },
+      { description: 'Bubblers', unit: 'EA', margin: 30 },
+      { description: 'Grotto / Waterfall', unit: 'LS', margin: 35 },
+    ],
+    'Accessories': [
+      { description: 'Stainless Handrail', unit: 'EA', margin: 28 },
+      { description: 'In-Pool Ladder', unit: 'EA', margin: 28 },
+      { description: 'Diving Board', unit: 'EA', margin: 28 },
+      { description: 'Pool Slide', unit: 'EA', margin: 28 },
+      { description: 'Safety Cover', unit: 'SF', margin: 30 },
+      { description: 'Automatic Cover', unit: 'LS', margin: 30 },
+    ],
+  },
+  portable_spa: {
+    'Spa Unit': [
+      { description: 'Hot Tub Unit (Standard)', unit: 'EA', margin: 25 },
+      { description: 'Hot Tub Unit (Premium)', unit: 'EA', margin: 28 },
+      { description: 'Hot Tub Unit (Luxury)', unit: 'EA', margin: 30 },
+      { description: 'Spa Cover (Insulated)', unit: 'EA', margin: 25 },
+      { description: 'Cover Lifter', unit: 'EA', margin: 25 },
+    ],
+    'Electrical': [
+      { description: '50 Amp Circuit Installation', unit: 'LS', margin: 25 },
+      { description: '60 Amp Circuit Installation', unit: 'LS', margin: 25 },
+      { description: 'GFCI Breaker', unit: 'EA', margin: 22 },
+      { description: 'Conduit Run', unit: 'LF', margin: 22 },
+      { description: 'Disconnect Box', unit: 'EA', margin: 22 },
+    ],
+    'Site Prep': [
+      { description: 'Concrete Pad (4")', unit: 'SF', margin: 25 },
+      { description: 'Gravel Base Prep', unit: 'SF', margin: 22 },
+      { description: 'Paver Pad', unit: 'SF', margin: 28 },
+      { description: 'Deck Extension', unit: 'SF', margin: 28 },
+      { description: 'Gazebo/Pergola Pad', unit: 'SF', margin: 25 },
+    ],
+    'Delivery': [
+      { description: 'Spa Delivery (Standard)', unit: 'LS', margin: 20 },
+      { description: 'Spa Delivery (Crane Required)', unit: 'LS', margin: 22 },
+      { description: 'Setup & Start-Up', unit: 'LS', margin: 20 },
+      { description: 'Water Fill & Chemical Balance', unit: 'LS', margin: 20 },
+    ],
+    'Accessories': [
+      { description: 'Spa Steps (2-Tier)', unit: 'EA', margin: 25 },
+      { description: 'Spa Steps (3-Tier)', unit: 'EA', margin: 25 },
+      { description: 'Handrail', unit: 'EA', margin: 25 },
+      { description: 'Towel Bar', unit: 'EA', margin: 22 },
+      { description: 'LED Light Package', unit: 'SET', margin: 28 },
+      { description: 'Bluetooth Audio Upgrade', unit: 'EA', margin: 28 },
+    ],
+  },
+  pavilion: {
+    'Structure': [
+      { description: 'Pavilion Kit (12x14)', unit: 'EA', margin: 28 },
+      { description: 'Pavilion Kit (14x16)', unit: 'EA', margin: 28 },
+      { description: 'Pavilion Kit (16x20)', unit: 'EA', margin: 28 },
+      { description: 'Pergola Kit (10x12)', unit: 'EA', margin: 28 },
+      { description: 'Pergola Kit (12x14)', unit: 'EA', margin: 28 },
+      { description: 'Custom Timber Frame', unit: 'LS', margin: 30 },
+      { description: 'Metal Roof System', unit: 'SF', margin: 28 },
+      { description: 'Shingle Roof System', unit: 'SF', margin: 25 },
+    ],
+    'Concrete/Foundation': [
+      { description: 'Concrete Footings', unit: 'EA', margin: 25 },
+      { description: 'Concrete Slab (4")', unit: 'SF', margin: 25 },
+      { description: 'Stamped Concrete Floor', unit: 'SF', margin: 28 },
+      { description: 'Foundation Piers', unit: 'EA', margin: 25 },
+      { description: 'Grade Beam', unit: 'LF', margin: 25 },
+    ],
+    'Flooring': [
+      { description: 'Travertine Pavers', unit: 'SF', margin: 30 },
+      { description: 'Porcelain Tile', unit: 'SF', margin: 28 },
+      { description: 'Flagstone', unit: 'SF', margin: 30 },
+      { description: 'Brick Pavers', unit: 'SF', margin: 28 },
+      { description: 'Decorative Concrete', unit: 'SF', margin: 25 },
+    ],
+    'Electrical & Lighting': [
+      { description: 'Electrical Rough-In', unit: 'LS', margin: 25 },
+      { description: 'Ceiling Fan(s)', unit: 'EA', margin: 25 },
+      { description: 'Recessed Lighting', unit: 'EA', margin: 25 },
+      { description: 'Pendant Lights', unit: 'EA', margin: 28 },
+      { description: 'Landscape Lighting', unit: 'EA', margin: 25 },
+      { description: 'Outlet Installation', unit: 'EA', margin: 22 },
+      { description: 'TV Mount & Wiring', unit: 'LS', margin: 25 },
+    ],
+    'Painting & Stain': [
+      { description: 'Exterior Stain (Posts/Beams)', unit: 'LS', margin: 25 },
+      { description: 'Paint (Trim/Ceiling)', unit: 'LS', margin: 25 },
+      { description: 'Clear Sealer', unit: 'LS', margin: 22 },
+    ],
+    'Fireplace/Masonry': [
+      { description: 'Outdoor Fireplace (Prefab)', unit: 'EA', margin: 30 },
+      { description: 'Custom Brick Fireplace', unit: 'LS', margin: 32 },
+      { description: 'Stone Veneer Fireplace', unit: 'LS', margin: 32 },
+      { description: 'Outdoor Kitchen Island', unit: 'LS', margin: 30 },
+      { description: 'Built-In Grill', unit: 'EA', margin: 28 },
+      { description: 'Side Burner', unit: 'EA', margin: 28 },
+      { description: 'Refrigerator (Outdoor)', unit: 'EA', margin: 25 },
+      { description: 'Sink & Faucet', unit: 'EA', margin: 25 },
+      { description: 'Granite/Stone Countertop', unit: 'LF', margin: 30 },
+    ],
+    'Accessories': [
+      { description: 'Privacy Curtains/Screens', unit: 'SET', margin: 28 },
+      { description: 'Ceiling Heater', unit: 'EA', margin: 28 },
+      { description: 'Mosquito Misting System', unit: 'LS', margin: 28 },
+      { description: 'Outdoor Bar Seating', unit: 'EA', margin: 25 },
+      { description: 'Storage Cabinet', unit: 'EA', margin: 25 },
+    ],
+  },
+  retaining_wall: {
+    'Excavation': [
+      { description: 'Wall Excavation', unit: 'LF', margin: 22 },
+      { description: 'Spoils Removal', unit: 'CY', margin: 22 },
+      { description: 'Fine Grade', unit: 'LF', margin: 22 },
+    ],
+    'Foundation': [
+      { description: 'Compacted Base Material', unit: 'TON', margin: 22 },
+      { description: 'Leveling Pad (Concrete)', unit: 'LF', margin: 25 },
+      { description: 'Compacted Gravel Base', unit: 'TON', margin: 22 },
+      { description: 'Geogrid Reinforcement', unit: 'SF', margin: 25 },
+    ],
+    'Block/Stone': [
+      { description: 'Segmental Retaining Wall Block', unit: 'SF', margin: 28 },
+      { description: 'Natural Stone (Stackable)', unit: 'SF', margin: 30 },
+      { description: 'Boulder Wall', unit: 'TON', margin: 28 },
+      { description: 'Poured Concrete Wall', unit: 'SF', margin: 25 },
+      { description: 'Block Adhesive', unit: 'TUBE', margin: 22 },
+    ],
+    'Caps & Finish': [
+      { description: 'Cap Block (Standard)', unit: 'LF', margin: 28 },
+      { description: 'Cap Block (Premium)', unit: 'LF', margin: 30 },
+      { description: 'Natural Stone Caps', unit: 'LF', margin: 32 },
+      { description: 'Sealer Application', unit: 'SF', margin: 22 },
+    ],
+    'Drainage': [
+      { description: 'Perforated Drain Pipe (4")', unit: 'LF', margin: 22 },
+      { description: 'Drainage Aggregate', unit: 'TON', margin: 22 },
+      { description: 'Filter Fabric', unit: 'SF', margin: 20 },
+      { description: 'Outlet/Pop-Up Emitter', unit: 'EA', margin: 22 },
+    ],
+    'Backfill': [
+      { description: 'Drainage Stone Backfill', unit: 'TON', margin: 22 },
+      { description: 'Structural Backfill', unit: 'CY', margin: 22 },
+      { description: 'Topsoil (Final Grade)', unit: 'CY', margin: 22 },
+      { description: 'Sod Installation', unit: 'SF', margin: 25 },
+    ],
+  },
+  fire_pit: {
+    'Foundation': [
+      { description: 'Excavation & Prep', unit: 'LS', margin: 22 },
+      { description: 'Compacted Base', unit: 'TON', margin: 22 },
+      { description: 'Concrete Footing', unit: 'SF', margin: 25 },
+      { description: 'Fire Brick Base', unit: 'SF', margin: 28 },
+    ],
+    'Masonry': [
+      { description: 'Fire Pit Block Kit', unit: 'EA', margin: 28 },
+      { description: 'Custom Block Fire Pit', unit: 'LS', margin: 30 },
+      { description: 'Brick Fire Pit', unit: 'LS', margin: 30 },
+      { description: 'Fire Brick Lining', unit: 'SF', margin: 28 },
+      { description: 'Outdoor Fireplace (Masonry)', unit: 'LS', margin: 32 },
+    ],
+    'Stone/Veneer': [
+      { description: 'Natural Stone Veneer', unit: 'SF', margin: 32 },
+      { description: 'Manufactured Stone Veneer', unit: 'SF', margin: 30 },
+      { description: 'Flagstone Cap', unit: 'LF', margin: 30 },
+      { description: 'Granite Cap', unit: 'LF', margin: 32 },
+      { description: 'Stucco Finish', unit: 'SF', margin: 25 },
+    ],
+    'Gas Line': [
+      { description: 'Gas Line Run (Trenching)', unit: 'LF', margin: 25 },
+      { description: 'Gas Shutoff Valve', unit: 'EA', margin: 22 },
+      { description: 'Gas Connection', unit: 'LS', margin: 25 },
+      { description: 'LP Tank Installation', unit: 'EA', margin: 25 },
+      { description: 'Gas Pressure Test', unit: 'LS', margin: 20 },
+    ],
+    'Fire Features': [
+      { description: 'Gas Burner Ring (Standard)', unit: 'EA', margin: 28 },
+      { description: 'Gas Burner Ring (Large)', unit: 'EA', margin: 28 },
+      { description: 'Fire Glass', unit: 'LB', margin: 30 },
+      { description: 'Lava Rock', unit: 'LB', margin: 25 },
+      { description: 'Fire Bowls', unit: 'EA', margin: 30 },
+      { description: 'Tiki Torches (Gas)', unit: 'EA', margin: 28 },
+      { description: 'Fire/Water Bowl', unit: 'EA', margin: 32 },
+    ],
+    'Seating': [
+      { description: 'Integrated Stone Bench', unit: 'LF', margin: 28 },
+      { description: 'Seat Wall (Block)', unit: 'LF', margin: 28 },
+      { description: 'Concrete Seat Wall', unit: 'LF', margin: 25 },
+      { description: 'Built-In Seating w/ Cushions', unit: 'LF', margin: 30 },
+    ],
+    'Lighting': [
+      { description: 'Low Voltage Landscape Lights', unit: 'EA', margin: 25 },
+      { description: 'Step Lights', unit: 'EA', margin: 25 },
+      { description: 'LED Strip Lighting', unit: 'LF', margin: 28 },
+      { description: 'Transformer & Wiring', unit: 'LS', margin: 22 },
+    ],
+  },
+  summary: {},
+};
+
 // Initialize proposal content
 const initializeProposal = (scope: ProjectScope): ProposalContent => {
   const config = SCOPE_CONFIGS[scope];
@@ -130,15 +411,28 @@ const initializeProposal = (scope: ProjectScope): ProposalContent => {
   };
 };
 
-// Initialize categories with empty line items
+// Initialize categories with default line items
 const initializeScope = (scope: ProjectScope): ScopeData => {
   const config = SCOPE_CONFIGS[scope];
+  const defaultItems = DEFAULT_LINE_ITEMS[scope] || {};
+
   return {
     enabled: scope === 'pool',
     categories: config.categories.map((name) => ({
       name,
       expanded: false,
-      lineItems: [],
+      lineItems: (defaultItems[name] || []).map((item, idx) => ({
+        id: `${scope}-${name}-${idx}-${Date.now()}`,
+        description: item.description,
+        qty: 0,
+        unit: item.unit,
+        materials: 0,
+        equipment: 0,
+        labor: 0,
+        margin: item.margin,
+        subcontract: 0,
+        notes: '',
+      })),
     })),
     proposal: initializeProposal(scope),
   };
